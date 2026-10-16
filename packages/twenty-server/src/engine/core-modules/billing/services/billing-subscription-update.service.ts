@@ -18,6 +18,7 @@ import {
   BillingExceptionCode,
 } from 'src/engine/core-modules/billing/billing.exception';
 import { billingValidator } from 'src/engine/core-modules/billing/billing.validate';
+import { BILLING_PLAN_SWITCHES } from 'src/engine/core-modules/billing/constants/billing-plan-switches.constant';
 import { BillingPriceEntity } from 'src/engine/core-modules/billing/entities/billing-price.entity';
 import { BillingSubscriptionEntity } from 'src/engine/core-modules/billing/entities/billing-subscription.entity';
 import { BillingPlanKey } from 'src/engine/core-modules/billing/enums/billing-plan-key.enum';
@@ -40,7 +41,9 @@ import { findSellableBaseProductPriceOrThrow } from 'src/engine/core-modules/bil
 import { findProductPriceForIntervalOrThrow } from 'src/engine/core-modules/billing/utils/find-product-price-for-interval-or-throw.util';
 import { isResourceCreditPriceForSubscription } from 'src/engine/core-modules/billing/utils/is-resource-credit-price-for-subscription.util';
 import { isSellableCatalogPrice } from 'src/engine/core-modules/billing/utils/is-sellable-catalog-price.util';
+import { isSendInvoiceSubscription } from 'src/engine/core-modules/billing/utils/is-send-invoice-subscription.util';
 import { getBaseProductSubscriptionItemOrThrow } from 'src/engine/core-modules/billing/utils/get-base-product-subscription-item-or-throw.util';
+import { getPlanSwitchOrThrow } from 'src/engine/core-modules/billing/utils/get-plan-switch-or-throw.util';
 import { getCurrentResourceCreditSubscriptionItemOrThrow } from 'src/engine/core-modules/billing/utils/get-resource-credit-subscription-item-or-throw.util';
 import { normalizePriceRef } from 'src/engine/core-modules/billing/utils/normalize-price-ref.utils';
 import { buildSchedulePhasesUpdate } from 'src/engine/core-modules/billing/utils/build-schedule-phases-update.util';
@@ -192,22 +195,23 @@ export class BillingSubscriptionUpdateService {
     });
   }
 
-  async changePlan(workspaceId: string) {
+  async changePlan(workspaceId: string, targetPlanKey?: BillingPlanKey) {
     const billingSubscription =
       await this.billingSubscriptionService.getCurrentBillingSubscriptionOrThrow(
         { workspaceId },
       );
 
-    const currentPlan =
+    const currentPlanKey =
       getBaseProductSubscriptionItemOrThrow(billingSubscription).billingProduct
         ?.metadata.planKey;
 
+    assertIsDefinedOrThrow(currentPlanKey);
+
+    const planSwitch = getPlanSwitchOrThrow({ currentPlanKey, targetPlanKey });
+
     await this.updateSubscription(workspaceId, billingSubscription.id, {
       type: SubscriptionUpdateType.PLAN,
-      newPlan:
-        currentPlan === BillingPlanKey.ENTERPRISE
-          ? BillingPlanKey.PRO
-          : BillingPlanKey.ENTERPRISE,
+      newPlan: planSwitch.targetPlanKey,
     });
   }
 
@@ -408,15 +412,29 @@ export class BillingSubscriptionUpdateService {
     const diffInCents =
       Number(newPrice.unitAmount) - Number(currentPrice.unitAmount);
 
-    if (diffInCents > 0) {
-      await this.stripeInvoiceService.createImmediateUpgradeInvoice({
-        stripeCustomerId: subscription.stripeCustomerId,
-        stripeSubscriptionId: subscription.stripeSubscriptionId,
-        diffAmountInCents: diffInCents,
-        description: `Resource usage - Upgrade resource credit price from $${Number(currentPrice.unitAmount) / 100} to $${Number(newPrice.unitAmount) / 100}`,
-        currency: newPrice.currency,
-      });
+    if (diffInCents <= 0) {
+      return;
     }
+
+    const upgradeInvoiceItem = {
+      stripeCustomerId: subscription.stripeCustomerId,
+      stripeSubscriptionId: subscription.stripeSubscriptionId,
+      diffAmountInCents: diffInCents,
+      description: `Resource usage - Upgrade resource credit price from $${Number(currentPrice.unitAmount) / 100} to $${Number(newPrice.unitAmount) / 100}`,
+      currency: newPrice.currency,
+    };
+
+    if (isSendInvoiceSubscription(subscription)) {
+      await this.stripeInvoiceService.createPendingUpgradeInvoiceItem(
+        upgradeInvoiceItem,
+      );
+
+      return;
+    }
+
+    await this.stripeInvoiceService.createImmediateUpgradeInvoice(
+      upgradeInvoiceItem,
+    );
   }
 
   private async getProductKeyByPriceId(
@@ -510,6 +528,7 @@ export class BillingSubscriptionUpdateService {
       {
         currentSeats: currentPrices.seats,
         isTrialing: subscription.status === SubscriptionStatus.Trialing,
+        isSendInvoice: isSendInvoiceSubscription(subscription),
       },
     );
 
@@ -593,8 +612,10 @@ export class BillingSubscriptionUpdateService {
             ?.metadata.planKey;
 
         const isDowngrade =
-          currentPlan !== update.newPlan &&
-          update.newPlan === BillingPlanKey.PRO;
+          isDefined(currentPlan) &&
+          BILLING_PLAN_SWITCHES[currentPlan].downgradePlanKeys.includes(
+            update.newPlan,
+          );
 
         return isDowngrade;
       }

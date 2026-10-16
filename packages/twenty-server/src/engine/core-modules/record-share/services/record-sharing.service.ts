@@ -5,7 +5,6 @@ import { Injectable } from '@nestjs/common';
 import { msg } from '@lingui/core/macro';
 import { EVERYONE_PRINCIPAL_ID } from 'twenty-shared/constants';
 import {
-  FeatureFlagKey,
   type ObjectRecord,
   RecordShareAccessLevel,
   RecordSharePrincipalType,
@@ -33,8 +32,11 @@ import { type RecordShare } from 'src/engine/core-modules/record-share/types/rec
 import { canRolesAccessAllRecords } from 'src/engine/core-modules/record-share/utils/can-roles-access-all-records.util';
 import { resolveDefaultGeneralAccessLevel } from 'src/engine/core-modules/record-share/utils/resolve-default-general-access-level.util';
 import { resolveRecordGeneralAccessLevel } from 'src/engine/core-modules/record-share/utils/resolve-record-general-access-level.util';
+import {
+  type ObjectSharing,
+  resolveObjectSharing,
+} from 'src/engine/core-modules/record-share/utils/resolve-object-sharing.util';
 import { resolveRecordSharePrincipalOrThrow } from 'src/engine/core-modules/record-share/utils/resolve-record-share-principal-or-throw.util';
-import { resolveRecordSharingMode } from 'src/engine/core-modules/record-share/utils/resolve-record-sharing-mode.util';
 import { resolveViewerRecordShareAccessLevel } from 'src/engine/core-modules/record-share/utils/resolve-viewer-record-share-access-level.util';
 import { validateShareWithPrincipalsOrThrow } from 'src/engine/core-modules/record-share/utils/validate-share-with-principals-or-throw.util';
 import { findFlatEntityByIdInFlatEntityMaps } from 'src/engine/metadata-modules/flat-entity/utils/find-flat-entity-by-id-in-flat-entity-maps.util';
@@ -46,8 +48,9 @@ import { type RecordTargetInput } from 'src/engine/metadata-modules/record-permi
 import { RecordPermissionsService } from 'src/engine/metadata-modules/record-permissions/services/record-permissions.service';
 import { type WorkspaceTransactionScope } from 'src/engine/twenty-orm/types/workspace-transaction-scope.type';
 import { buildSystemAuthContext } from 'src/engine/twenty-orm/utils/build-system-auth-context.util';
+import { getRoleIdsFromRolePermissionConfig } from 'src/engine/twenty-orm/utils/get-role-ids-from-role-permission-config.util';
 import { resolvePrincipalIdsFromAuthContext } from 'src/engine/twenty-orm/utils/resolve-principal-ids-from-auth-context.util';
-import { resolveRoleIdsFromAuthContext } from 'src/engine/twenty-orm/utils/resolve-role-ids-from-auth-context.util';
+import { resolveRolePermissionConfig } from 'src/engine/twenty-orm/utils/resolve-role-permission-config.util';
 import { WorkspaceOrmManager } from 'src/engine/twenty-orm/workspace-orm.manager';
 import { WorkspaceCacheService } from 'src/engine/workspace-cache/services/workspace-cache.service';
 import { getWorkspaceSchemaName } from 'src/engine/workspace-datasource/utils/get-workspace-schema-name.util';
@@ -57,10 +60,8 @@ type RecordSharingArgs = RecordTargetInput & {
   authContext: UserWorkspaceAuthContext;
 };
 
-type RecordSharingObject = {
+type RecordSharingObject = ObjectSharing & {
   flatObjectMetadata: FlatObjectMetadata;
-  isRecordSharingEnabled: boolean;
-  sharingMode: RecordSharingMode;
 };
 
 type RecordSharingChange = {
@@ -146,7 +147,7 @@ export class RecordSharingService {
             workspaceId,
             transactionScope,
             flatObjectMetadata: sharingObject.flatObjectMetadata,
-            isRecordSharingEnabled: sharingObject.isRecordSharingEnabled,
+            canShareBeyondRole: sharingObject.canShareBeyondRole,
             principals: [principal],
             recordIds: [args.recordId],
           },
@@ -504,18 +505,31 @@ export class RecordSharingService {
     const workspaceId = authContext.workspace.id;
     const isOpenByDefault =
       sharingObject.sharingMode === RecordSharingMode.OPEN_BY_DEFAULT;
-    const { userWorkspaceRoleMap, apiKeyRoleMap, roleIdsWithAllRecordsAccess } =
-      await this.workspaceCacheService.getOrRecompute(workspaceId, [
-        'userWorkspaceRoleMap',
-        'apiKeyRoleMap',
-        'roleIdsWithAllRecordsAccess',
-      ]);
-    const roleMaps = { authContext, userWorkspaceRoleMap, apiKeyRoleMap };
-    const principalIds = resolvePrincipalIdsFromAuthContext(roleMaps) ?? [];
-    const canAccessAllRecords = canRolesAccessAllRecords({
-      roleIds: resolveRoleIdsFromAuthContext(roleMaps),
+    const {
+      userWorkspaceRoleMap,
+      apiKeyRoleMap,
+      flatRoleTargetByAgentIdMaps,
       roleIdsWithAllRecordsAccess,
-    });
+    } = await this.workspaceCacheService.getOrRecompute(workspaceId, [
+      'userWorkspaceRoleMap',
+      'apiKeyRoleMap',
+      'flatRoleTargetByAgentIdMaps',
+      'roleIdsWithAllRecordsAccess',
+    ]);
+    const roleMaps = {
+      authContext,
+      userWorkspaceRoleMap,
+      apiKeyRoleMap,
+      flatRoleTargetByAgentIdMaps,
+    };
+    const principalIds = resolvePrincipalIdsFromAuthContext(roleMaps) ?? [];
+    const rolePermissionConfig = resolveRolePermissionConfig(roleMaps);
+    const canAccessAllRecords =
+      isDefined(rolePermissionConfig) &&
+      canRolesAccessAllRecords({
+        roleIds: getRoleIdsFromRolePermissionConfig(rolePermissionConfig),
+        roleIdsWithAllRecordsAccess,
+      });
     const shares = await this.recordShareStorageService.findByRecordIds({
       workspaceId,
       objectMetadataId,
@@ -653,16 +667,9 @@ export class RecordSharingService {
       throw new NotFoundError('Record not found');
     }
 
-    const isRecordSharingEnabled =
-      featureFlagsMap[FeatureFlagKey.IS_RECORD_LEVEL_SHARING_ENABLED] ?? false;
-
     return {
       flatObjectMetadata,
-      isRecordSharingEnabled,
-      sharingMode: resolveRecordSharingMode({
-        flatObjectMetadata,
-        isRecordSharingEnabled,
-      }),
+      ...resolveObjectSharing({ flatObjectMetadata, featureFlagsMap }),
     };
   }
 }

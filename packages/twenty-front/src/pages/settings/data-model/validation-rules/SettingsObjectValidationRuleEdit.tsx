@@ -3,15 +3,17 @@ import { isDefined } from 'twenty-shared/utils';
 
 import { useFilteredObjectMetadataItems } from '@/object-metadata/hooks/useFilteredObjectMetadataItems';
 import { SettingsValidationRuleEditForm } from '@/validation-rules/components/SettingsValidationRuleEditForm';
+import { useHasValidationRulesEntitlement } from '@/validation-rules/hooks/useHasValidationRulesEntitlement';
 import { useValidationRules } from '@/validation-rules/hooks/useValidationRules';
 import { useIsFeatureEnabled } from '@/workspace/hooks/useIsFeatureEnabled';
 import { FeatureFlagKey } from '~/generated-metadata/graphql';
 import { NotFound } from '~/pages/not-found/NotFound';
 
 export const SettingsObjectValidationRuleEdit = () => {
-  const isValidationRulesEnabled = useIsFeatureEnabled(
-    FeatureFlagKey.IS_VALIDATION_RULES_ENABLED,
+  const isRecordCreationFormEnabled = useIsFeatureEnabled(
+    FeatureFlagKey.IS_RECORD_CREATION_FORM_ENABLED,
   );
+  const hasValidationRulesEntitlement = useHasValidationRulesEntitlement();
   const { objectNamePlural = '', validationRuleId = '' } = useParams();
   const { findObjectMetadataItemByNamePlural } =
     useFilteredObjectMetadataItems();
@@ -23,12 +25,12 @@ export const SettingsObjectValidationRuleEdit = () => {
     objectMetadataId: objectMetadataItem?.id ?? '',
   });
 
-  if (!isValidationRulesEnabled || !isDefined(objectMetadataItem)) {
+  if (
+    !isRecordCreationFormEnabled ||
+    !hasValidationRulesEntitlement ||
+    !isDefined(objectMetadataItem)
+  ) {
     return <NotFound />;
-  }
-
-  if (loading) {
-    return null;
   }
 
   const validationRule = validationRules.find(
@@ -36,7 +38,7 @@ export const SettingsObjectValidationRuleEdit = () => {
   );
 
   if (!isDefined(validationRule)) {
-    return <NotFound />;
+    return loading ? null : <NotFound />;
   }
 
   return (

@@ -6,7 +6,7 @@ import { GenericDropdownContentWidth } from '@/ui/layout/dropdown/constants/Gene
 import { styled } from '@linaria/react';
 import { t } from '@lingui/core/macro';
 import { useMemo, useRef, useState } from 'react';
-import { Dropdown } from 'twenty-ui/components';
+import { Dropdown } from 'twenty-ui/components/navigation';
 import { Tag } from 'twenty-ui/primitives/data-display';
 
 import { type SelectValue } from '@/ui/input/components/internal/select/types';
@@ -17,7 +17,7 @@ import { SelectControl } from '@/ui/input/components/SelectControl';
 import { isNonEmptyArray, isNonEmptyString } from '@sniptt/guards';
 import { isDefined } from 'twenty-shared/utils';
 import { themeCssVariables } from 'twenty-ui/theme';
-import { normalizeSearchText } from '~/utils/normalizeSearchText';
+import { normalizeSearchText } from 'twenty-ui/utilities';
 
 const StyledContainer = styled.div<{ fullWidth?: boolean }>`
   width: ${({ fullWidth }) => (fullWidth ? '100%' : 'auto')};
@@ -128,6 +128,11 @@ export const Select = <TValue extends SelectValue>({
     };
   }, [selectedOption, showContextualTextInControl, showIconInControl]);
 
+  const isShowingEmptyPrompt =
+    isDefined(emptyOption) &&
+    selectedOption === emptyOption &&
+    !isDefined(emptyOption.Icon);
+
   if (!isDefined(controlSelectedOption)) {
     return <></>;
   }
@@ -154,6 +159,7 @@ export const Select = <TValue extends SelectValue>({
         <SelectControl
           renderAsTag={renderAsTag}
           selectedOption={controlSelectedOption}
+          textAccent={isShowingEmptyPrompt ? 'placeholder' : 'default'}
           isDisabled={isDisabled}
           selectSizeVariant={selectSizeVariant}
           hasRightElement={hasRightElement}
@@ -173,6 +179,7 @@ export const Select = <TValue extends SelectValue>({
             <SelectControl
               renderAsTag={renderAsTag}
               selectedOption={controlSelectedOption}
+              textAccent={isShowingEmptyPrompt ? 'placeholder' : 'default'}
               isDisabled={isDisabled}
               selectSizeVariant={selectSizeVariant}
               hasRightElement={hasRightElement}
@@ -265,13 +272,7 @@ export const Select = <TValue extends SelectValue>({
                       }
                     >
                       {isColoredTag ? (
-                        <Tag
-                          color={tagColor}
-                          borderStyle="dashed"
-                          variant="soft"
-                        >
-                          {option.label}
-                        </Tag>
+                        <Tag color={tagColor}>{option.label}</Tag>
                       ) : (
                         option.label
                       )}

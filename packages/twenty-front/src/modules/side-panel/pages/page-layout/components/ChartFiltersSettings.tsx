@@ -1,10 +1,10 @@
 import { ChartFiltersDeletedFieldsWarning } from '@/side-panel/pages/page-layout/components/ChartFiltersDeletedFieldsWarning';
 import { ChartFiltersSettingsInitializeStateEffect } from '@/side-panel/pages/page-layout/components/ChartFiltersSettingsInitializeStateEffect';
-import { usePageLayoutIdFromContextStore } from '@/side-panel/pages/page-layout/hooks/usePageLayoutIdFromContextStore';
+import { usePageLayoutSidePanelTarget } from '@/side-panel/pages/page-layout/hooks/usePageLayoutSidePanelTarget';
 import { useUpdateCurrentWidgetConfig } from '@/side-panel/pages/page-layout/hooks/useUpdateCurrentWidgetConfig';
 import { type ChartWidget } from '@/side-panel/pages/page-layout/types/ChartWidget';
 import { type ChartWidgetConfiguration } from '@/side-panel/pages/page-layout/types/ChartWidgetConfiguration';
-import { dropChartRecordFiltersWithDeletedFields } from '@/side-panel/pages/page-layout/utils/dropChartRecordFiltersWithDeletedFields';
+import { sanitizeChartRecordFilters } from '@/side-panel/pages/page-layout/utils/sanitizeChartRecordFilters';
 import { getChartFiltersSettingsInstanceId } from '@/side-panel/pages/page-layout/utils/getChartFiltersSettingsInstanceId';
 
 import { type EnrichedObjectMetadataItem } from '@/object-metadata/types/EnrichedObjectMetadataItem';
@@ -44,7 +44,7 @@ export const ChartFiltersSettings = ({
     objectMetadataItemId: objectMetadataItem.id,
   });
 
-  const { pageLayoutId } = usePageLayoutIdFromContextStore();
+  const { pageLayoutId } = usePageLayoutSidePanelTarget();
 
   const { updateCurrentWidgetConfig } =
     useUpdateCurrentWidgetConfig(pageLayoutId);
@@ -79,12 +79,12 @@ export const ChartFiltersSettings = ({
     const {
       recordFilters: sanitizedRecordFilters,
       recordFilterGroups: sanitizedRecordFilterGroups,
-    } = dropChartRecordFiltersWithDeletedFields({
+    } = sanitizeChartRecordFilters({
       chartFilters: {
         recordFilters: existingRecordFilters,
         recordFilterGroups: existingRecordFilterGroups,
       },
-      validFieldMetadataIds,
+      fieldMetadataItems: objectMetadataItem.fields,
     });
 
     updateCurrentWidgetConfig({

@@ -32,6 +32,7 @@ export {
   IconBadge2k,
   IconBaselineDensitySmall,
   IconBell,
+  IconBellOff,
   IconBlockquote,
   IconBold,
   IconBolt,
@@ -431,11 +432,13 @@ export {
   IconUnlink,
   IconUpload,
   IconUser,
+  IconUserOff,
   IconUserCircle,
   IconUserCog,
   IconUserPin,
   IconUserPlus,
   IconUsers,
+  IconUsersGroup,
   IconVariable,
   IconVariablePlus,
   IconVersions,
@@ -447,6 +450,8 @@ export {
   IconWorld,
   IconWorldWww,
   IconX,
+  IconZzz,
+  IconZzzOff,
 } from '@tabler/icons-react';
 
 export type { IconProps as TablerIconsProps } from '@tabler/icons-react';

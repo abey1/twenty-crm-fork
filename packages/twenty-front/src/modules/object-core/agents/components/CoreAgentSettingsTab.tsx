@@ -9,14 +9,13 @@ import { SettingsTextInput } from '@/ui/input/components/SettingsTextInput';
 import { TextArea } from '@/ui/input/components/TextArea';
 import { useDialog } from '@/ui/layout/dialog/hooks/useDialog';
 import { isDefined } from 'twenty-shared/utils';
-import { Section } from 'twenty-ui/components';
+import { Section } from 'twenty-ui/components/layout';
 import { IconTrash } from 'twenty-ui/icon';
 import { Button } from 'twenty-ui/primitives/input';
 import { themeCssVariables } from 'twenty-ui/theme';
 import { type Agent } from '~/generated-metadata/graphql';
 import { CoreAgentDeleteConfirmationModal } from '@/object-core/agents/components/CoreAgentDeleteConfirmationModal';
-import { CoreAgentResponseFormat } from '@/object-core/agents/components/CoreAgentResponseFormat';
-import { computeMetadataNameFromLabel } from '~/pages/settings/data-model/utils/computeMetadataNameFromLabel';
+import { computeMetadataNameFromLabel } from '@/object-metadata/utils/computeMetadataNameFromLabel';
 import { type CoreAgentFormValues } from '@/object-core/agents/validation-schemas/coreAgentFormSchema';
 import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
 
@@ -143,15 +142,6 @@ export const CoreAgentSettingsTab = ({
           maxRows={15}
           value={formValues.prompt}
           onChange={(value) => onFieldChange('prompt', value)}
-          disabled={disabled}
-        />
-      </StyledFormContainer>
-      <StyledFormContainer>
-        <CoreAgentResponseFormat
-          responseFormat={formValues.responseFormat}
-          onResponseFormatChange={(format) =>
-            onFieldChange('responseFormat', format)
-          }
           disabled={disabled}
         />
       </StyledFormContainer>

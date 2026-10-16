@@ -33,6 +33,7 @@
       "IconBadge2k",
       "IconBaselineDensitySmall",
       "IconBell",
+      "IconBellOff",
       "IconBlockquote",
       "IconBold",
       "IconBolt",
@@ -434,9 +435,11 @@
       "IconUser",
       "IconUserCircle",
       "IconUserCog",
+      "IconUserOff",
       "IconUserPin",
       "IconUserPlus",
       "IconUsers",
+      "IconUsersGroup",
       "IconVariable",
       "IconVariablePlus",
       "IconVersions",
@@ -447,7 +450,9 @@
       "IconWindow",
       "IconWorld",
       "IconWorldWww",
-      "IconX"
+      "IconX",
+      "IconZzz",
+      "IconZzzOff"
     ],
     "props": [
       "color",

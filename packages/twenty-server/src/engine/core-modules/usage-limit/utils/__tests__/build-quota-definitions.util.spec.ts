@@ -16,6 +16,7 @@ describe('buildQuotaDefinitions', () => {
         limitKind,
       ]),
     ).toEqual([
+      [UsageResourceType.ALL, 'quota'],
       [UsageResourceType.AI, 'quota'],
       [UsageResourceType.WORKFLOW, 'quota'],
       [UsageResourceType.LOGIC_FUNCTION, 'quota'],
@@ -24,9 +25,7 @@ describe('buildQuotaDefinitions', () => {
   });
 
   it('carries the allow lists a form needs to offer a scope', () => {
-    const quota = buildQuotaDefinitions().find(
-      (definition) => definition.limitKind === 'quota',
-    );
+    const quota = findQuotaDefinition(UsageResourceType.AI);
 
     expect(quota?.allowedOperations.length).toBeGreaterThan(0);
     expect(quota?.allowedSpenderTypes).toContain('workspace');
@@ -53,6 +52,37 @@ describe('buildQuotaDefinitions', () => {
         allowedUnits: [UsageUnit.CREDIT, UsageUnit.INVOCATION],
       },
     ]);
+  });
+
+  it('lists the overridable instance defaults as scopes only an operator can set', () => {
+    expect(
+      findQuotaDefinition(UsageResourceType.EMAIL)?.operatorOnlyScopes,
+    ).toEqual([
+      {
+        operationType: UsageOperationType.EMAIL_SEND,
+        spenderType: 'workspace',
+        unit: UsageUnit.INVOCATION,
+        periodUnit: 'day',
+      },
+    ]);
+  });
+
+  it('lists no operator-only scope for a resource without quota defaults', () => {
+    expect(
+      findQuotaDefinition(UsageResourceType.AI)?.operatorOnlyScopes,
+    ).toEqual([]);
+  });
+
+  it('offers every resource as one credit scope for an application', () => {
+    const allResources = findQuotaDefinition(UsageResourceType.ALL);
+
+    expect(allResources?.allowedOperations).toEqual([
+      {
+        operationType: UsageOperationType.ALL,
+        allowedUnits: [UsageUnit.CREDIT],
+      },
+    ]);
+    expect(allResources?.allowedSpenderTypes).toEqual(['application']);
   });
 
   it('offers credits and runs on code execution, with no every-operation entry', () => {

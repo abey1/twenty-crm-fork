@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 
+import { msg } from '@lingui/core/macro';
 import { type LanguageModel, type TranscriptionModel } from 'ai';
 import { isNonEmptyString } from '@sniptt/guards';
 import {
@@ -448,22 +449,6 @@ export class AiModelRegistryService {
     return this.evaluationRegistry.get(modelId);
   }
 
-  getAvailableEvaluationModels(): RegisteredAiEvaluationModel[] {
-    this.ensureFresh();
-
-    return Array.from(this.evaluationRegistry.values());
-  }
-
-  // first in provider config order; skips admin-disabled models so withdrawing the only one sends unpinned
-  // steps to the language fallback
-  getDefaultEvaluationModel(): RegisteredAiEvaluationModel | undefined {
-    return this.getAvailableEvaluationModels().find(
-      (model) =>
-        !this.getEvaluationModelConfig(model.modelId)?.isDeprecated &&
-        this.isModelAdminAllowed(model.modelId),
-    );
-  }
-
   getEvaluationModelConfig(
     modelId: string,
   ): AiEvaluationModelConfig | undefined {
@@ -476,10 +461,6 @@ export class AiModelRegistryService {
     this.ensureFresh();
 
     return Array.from(this.evaluationConfigCache.values());
-  }
-
-  hasEvaluationModel(): boolean {
-    return isDefined(this.getDefaultEvaluationModel());
   }
 
   private toAiModelConfig(
@@ -722,6 +703,9 @@ export class AiModelRegistryService {
       throw new AiException(
         'The selected model has been disabled by the administrator.',
         AiExceptionCode.AGENT_EXECUTION_FAILED,
+        {
+          userFriendlyMessage: msg`The selected model has been disabled by the administrator.`,
+        },
       );
     }
 

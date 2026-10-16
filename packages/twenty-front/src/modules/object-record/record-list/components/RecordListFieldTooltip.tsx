@@ -1,4 +1,5 @@
 import { useRecordIndexContextOrThrow } from '@/object-record/record-index/contexts/RecordIndexContext';
+import { TooltipTextContent } from '@/ui/layout/tooltip/components/TooltipTextContent';
 import { type ReactNode } from 'react';
 import { isDefined } from 'twenty-shared/utils';
 import { useIcons } from 'twenty-ui/icon';
@@ -28,13 +29,21 @@ export const RecordListFieldTooltip = ({
         return (
           <>
             {children}
-            <Tooltip.Popup side="bottom" positionMethod="fixed">
-              <Tooltip.Content
-                startIcon={isDefined(FieldIcon) ? <FieldIcon /> : undefined}
+            <Tooltip.Portal>
+              <Tooltip.Positioner
+                side="bottom"
+                positionMethod="fixed"
+                sideOffset={10}
               >
-                {fieldDefinition?.label}
-              </Tooltip.Content>
-            </Tooltip.Popup>
+                <Tooltip.Popup maxWidth={300}>
+                  <TooltipTextContent
+                    startIcon={isDefined(FieldIcon) ? <FieldIcon /> : undefined}
+                  >
+                    {fieldDefinition?.label}
+                  </TooltipTextContent>
+                </Tooltip.Popup>
+              </Tooltip.Positioner>
+            </Tooltip.Portal>
           </>
         );
       }}

@@ -20,6 +20,7 @@ import {
   ASK_QUESTION_TOOL_NAME,
   ASK_QUESTIONS_TOOL_NAME,
   type ExtendedUIMessagePart,
+  isNoReplyToolPart,
   isSucceededCompleteWorkspaceSetupToolPart,
   PROPOSE_TOOL_CALL_TOOL_NAME,
   REQUEST_FORM_TOOL_NAME,
@@ -112,10 +113,14 @@ export const AiChatAssistantMessageRenderer = ({
   messageParts,
   isLastMessageStreaming,
   hasError,
+  shouldHideThinkingSteps = false,
+  workDurationMs,
 }: {
   messageParts: ExtendedUIMessagePart[];
   isLastMessageStreaming: boolean;
   hasError?: boolean;
+  shouldHideThinkingSteps?: boolean;
+  workDurationMs?: number | null;
 }) => {
   const frontComponentIdByToolName = useFrontComponentIdByToolName();
 
@@ -130,13 +135,14 @@ export const AiChatAssistantMessageRenderer = ({
       part.type !== 'data-thread-title' &&
       !isEmptyReasoningPart(part) &&
       !isHiddenCompleteWorkspaceSetupToolPart(part) &&
+      !isNoReplyToolPart(part) &&
       !(
         hasCodeExecutionData &&
         isToolUIPart(part) &&
         getEffectiveToolName(part) === 'code_interpreter'
       ),
   );
-  const renderItems = groupContiguousThinkingStepParts(
+  const groupedRenderItems = groupContiguousThinkingStepParts(
     filteredParts,
     (part) =>
       isToolUIPart(part) &&
@@ -145,8 +151,21 @@ export const AiChatAssistantMessageRenderer = ({
         frontComponentIdByToolName.get(getEffectiveToolName(part)),
       ),
   );
+  const renderItemsWithoutThinkingSteps = groupedRenderItems.filter(
+    (renderItem) => renderItem.type !== 'thinking-steps',
+  );
+  // Falling back to the steps keeps a finished message from rendering as an empty entry
+  const renderItems =
+    shouldHideThinkingSteps &&
+    (isLastMessageStreaming || renderItemsWithoutThinkingSteps.length > 0)
+      ? renderItemsWithoutThinkingSteps
+      : groupedRenderItems;
 
   const lastRenderItemIndex = renderItems.length - 1;
+  // the duration covers the whole message, so only the steps right before the final answer carry it
+  const lastThinkingStepsRenderItemIndex = renderItems.findLastIndex(
+    (renderItem) => renderItem.type === 'thinking-steps',
+  );
 
   if (!renderItems.length && !hasError) {
     const hasOnlyHiddenReasoning =
@@ -179,6 +198,11 @@ export const AiChatAssistantMessageRenderer = ({
                 isLastMessageStreaming &&
                 !hasError &&
                 index === lastRenderItemIndex
+              }
+              workDurationMs={
+                index === lastThinkingStepsRenderItemIndex
+                  ? workDurationMs
+                  : null
               }
             />
           ) : (

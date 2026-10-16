@@ -179,12 +179,11 @@ export class ToolRegistryService {
 
   async buildToolIndex(
     workspaceId: string,
-    roleId: string,
-    options?: {
+    options: {
       userId?: string;
       userWorkspaceId?: string;
       locale?: keyof typeof APP_LOCALES;
-      rolePermissionConfig?: RolePermissionConfig;
+      rolePermissionConfig: RolePermissionConfig;
       categories?: ToolCategory[];
       excludeTools?: Set<string>;
       application?: FlatApplication;
@@ -192,17 +191,16 @@ export class ToolRegistryService {
   ): Promise<ToolIndexEntry[]> {
     const context = this.buildContextFromToolContext({
       workspaceId,
-      roleId,
-      rolePermissionConfig: options?.rolePermissionConfig,
-      userId: options?.userId,
-      userWorkspaceId: options?.userWorkspaceId,
-      locale: options?.locale,
-      application: options?.application,
+      rolePermissionConfig: options.rolePermissionConfig,
+      userId: options.userId,
+      userWorkspaceId: options.userWorkspaceId,
+      locale: options.locale,
+      application: options.application,
     });
 
     return this.getCatalog(context, {
-      categories: options?.categories,
-      excludeTools: options?.excludeTools,
+      categories: options.categories,
+      excludeTools: options.excludeTools,
     });
   }
 
@@ -401,13 +399,36 @@ export class ToolRegistryService {
     );
   }
 
-  // MCP and the workflow agent need full schemas.
   async getToolsByCategories(
     context: ToolProviderContext,
     options: ToolRetrievalOptions = {},
   ): Promise<ToolSet> {
     const { categories, excludeTools, compactOutput, spillLargeOutput } =
       options;
+
+    const descriptors = await this.getDescriptorsByCategories(context, {
+      categories,
+      excludeTools,
+    });
+
+    const toolSet = this.hydrateToolSet(descriptors, context, {
+      compactOutput,
+      spillLargeOutput,
+    });
+
+    this.logger.log(
+      `Generated ${Object.keys(toolSet).length} tools for categories: [${categories?.join(', ') ?? 'all'}]`,
+    );
+
+    return toolSet;
+  }
+
+  // MCP and the workflow agent need full schemas.
+  async getDescriptorsByCategories(
+    context: ToolProviderContext,
+    options: Pick<ToolRetrievalOptions, 'categories' | 'excludeTools'> = {},
+  ): Promise<ToolDescriptor[]> {
+    const { categories, excludeTools } = options;
     const categorySet = categories ? new Set(categories) : undefined;
 
     const results = await Promise.all(
@@ -438,16 +459,7 @@ export class ToolRegistryService {
       );
     }
 
-    const toolSet = this.hydrateToolSet(filteredDescriptors, context, {
-      compactOutput,
-      spillLargeOutput,
-    });
-
-    this.logger.log(
-      `Generated ${Object.keys(toolSet).length} tools for categories: [${categories?.join(', ') ?? 'all'}]`,
-    );
-
-    return toolSet;
+    return filteredDescriptors;
   }
 
   private generateProviderDescriptors(
@@ -484,11 +496,6 @@ export class ToolRegistryService {
   private buildContextFromToolContext(
     context: ToolContext,
   ): ToolProviderContext {
-    const rolePermissionConfig: RolePermissionConfig =
-      context.rolePermissionConfig ?? {
-        unionOf: [context.roleId],
-      };
-
     return {
       resolveExecutionContext: context.resolveExecutionContext
         ? async () =>
@@ -497,13 +504,13 @@ export class ToolRegistryService {
             )
         : undefined,
       workspaceId: context.workspaceId,
-      roleId: context.roleId,
-      rolePermissionConfig,
+      rolePermissionConfig: context.rolePermissionConfig,
       authContext: context.authContext,
       application: context.application,
       actorContext: context.actorContext,
       userId: context.userId,
       userWorkspaceId: context.userWorkspaceId,
+      agentId: context.agentId,
       threadId: context.threadId,
       locale: context.locale,
       onCodeExecutionUpdate: context.onCodeExecutionUpdate,

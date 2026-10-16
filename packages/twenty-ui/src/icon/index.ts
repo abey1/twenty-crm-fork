@@ -88,6 +88,7 @@ export {
   IconBadge2k,
   IconBaselineDensitySmall,
   IconBell,
+  IconBellOff,
   IconBlockquote,
   IconBold,
   IconBolt,
@@ -487,11 +488,13 @@ export {
   IconUnlink,
   IconUpload,
   IconUser,
+  IconUserOff,
   IconUserCircle,
   IconUserCog,
   IconUserPin,
   IconUserPlus,
   IconUsers,
+  IconUsersGroup,
   IconVariable,
   IconVariablePlus,
   IconVersions,
@@ -503,6 +506,8 @@ export {
   IconWorld,
   IconWorldWww,
   IconX,
+  IconZzz,
+  IconZzzOff,
 } from './components/TablerIcons';
 export { ThinkingOrbitLoaderIcon } from './components/ThinkingOrbitLoaderIcon';
 export type {

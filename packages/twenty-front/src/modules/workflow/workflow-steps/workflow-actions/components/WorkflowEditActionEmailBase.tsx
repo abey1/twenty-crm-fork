@@ -18,6 +18,7 @@ import { WORKFLOW_STEP_CONNECTED_ACCOUNT_HANDLE } from '@/workflow/graphql/queri
 import { useWorkflowWithCurrentVersion } from '@/workflow/hooks/useWorkflowWithCurrentVersion';
 import { workflowVisualizerWorkflowIdComponentState } from '@/workflow/states/workflowVisualizerWorkflowIdComponentState';
 import { type WorkflowEmailAction } from '@/workflow/types/WorkflowEmailAction';
+import { getWorkflowStepDisplayName } from '@/workflow/utils/getWorkflowStepDisplayName';
 import { WorkflowStepBody } from '@/workflow/workflow-steps/components/WorkflowStepBody';
 import { WorkflowStepFooter } from '@/workflow/workflow-steps/components/WorkflowStepFooter';
 import { WorkflowSendEmailAttachments } from '@/workflow/workflow-steps/workflow-actions/components/WorkflowSendEmailAttachments';
@@ -39,7 +40,8 @@ import {
   isDefined,
 } from 'twenty-shared/utils';
 import { isStandaloneVariableString } from 'twenty-shared/workflow';
-import { Callout, Dropdown } from 'twenty-ui/components';
+import { Callout } from 'twenty-ui/components/feedback';
+import { Dropdown } from 'twenty-ui/components/navigation';
 import { IconPlus } from 'twenty-ui/icon';
 import { Button } from 'twenty-ui/primitives/input';
 import { PermissionFlagType } from '~/generated-metadata/graphql';
@@ -254,7 +256,7 @@ export const WorkflowEditActionEmailBase = ({
           {isDefined(missingScopes) && (
             <>
               <Callout
-                variant={'error'}
+                status={'error'}
                 title={t`Missing email draft permission.`}
                 description={
                   hasConnectedAccountsPermission
@@ -262,9 +264,12 @@ export const WorkflowEditActionEmailBase = ({
                     : t`Ask a workspace admin for the Sync Account permission to reconnect this account.`
                 }
                 action={
-                  hasConnectedAccountsPermission
-                    ? { label: t`Reauthorize`, onClick: handleReauthorize }
-                    : undefined
+                  hasConnectedAccountsPermission ? (
+                    <Callout.Action
+                      type="button"
+                      onClick={handleReauthorize}
+                    >{t`Reauthorize`}</Callout.Action>
+                  ) : undefined
                 }
               />
             </>
@@ -393,7 +398,12 @@ export const WorkflowEditActionEmailBase = ({
                 href: '#',
               },
               {
-                children: isDefined(action.name) ? action.name : t`Email`,
+                children: isDefined(action.name)
+                  ? getWorkflowStepDisplayName({
+                      name: action.name,
+                      type: action.type,
+                    })
+                  : t`Email`,
                 href: '#',
               },
               {
