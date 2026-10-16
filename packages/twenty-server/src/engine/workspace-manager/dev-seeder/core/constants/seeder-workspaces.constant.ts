@@ -34,7 +34,7 @@ export type SeededWorkspacesIds =
 export const SEEDER_CREATE_WORKSPACE_INPUT = {
   [SEED_APPLE_WORKSPACE_ID]: {
     id: SEED_APPLE_WORKSPACE_ID,
-    displayName: 'Apple',
+    displayName: 'strive2thrive.earth',
     subdomain: 'apple',
     inviteHash: 'apple.dev-invite-hash',
     logo: 'https://twentyhq.github.io/placeholder-images/workspaces/apple-logo.png',

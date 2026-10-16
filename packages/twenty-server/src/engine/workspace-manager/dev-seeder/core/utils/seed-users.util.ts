@@ -4,9 +4,13 @@ import { generateRandomUsers } from './generate-random-users.util';
 
 const tableName = 'user';
 
+const THRIVE_ADMIN_USER_ID = '20202020-9e3b-46d4-a556-88b9ddc2b034';
+
 export const USER_DATA_SEED_IDS = {
   JANE: '20202020-e6b5-4680-8a32-b8209737156b',
-  TIM: '20202020-9e3b-46d4-a556-88b9ddc2b034',
+  // TIM kept as an alias so existing seed references keep working
+  TIM: THRIVE_ADMIN_USER_ID,
+  THRIVE_ADMIN: THRIVE_ADMIN_USER_ID,
   JONY: '20202020-3957-4908-9c36-2929a23f8357',
   PHIL: '20202020-7169-42cf-bc47-1cfef15264b8',
   SCOTT: '20202020-1111-4a01-8001-000000000001',
@@ -24,12 +28,12 @@ type SeedUsersArgs = {
 export const seedUsers = async ({ queryRunner, schemaName }: SeedUsersArgs) => {
   const originalUsers = [
     {
-      id: USER_DATA_SEED_IDS.TIM,
-      firstName: 'Tim',
-      lastName: 'Apple',
-      email: 'tim@apple.dev',
+      id: USER_DATA_SEED_IDS.THRIVE_ADMIN,
+      firstName: 'thrive_admin',
+      lastName: 'strive2thrive.earth',
+      email: 'thrive_admin@strive2thrive.earth',
       passwordHash:
-        '$2b$10$3LwXjJRtLsfx4hLuuXhxt.3mWgismTiZFCZSG3z9kDrSfsrBl0fT6', // tim@apple.dev
+        '$2b$10$jejlbm7tl0AeCJZUmEc.eu.jrzUo3sNKdZ2fDCDWO.GtZWHjhHJNK', // thrive_admin@strive2thrive.earth
       canImpersonate: true,
       canAccessFullAdminPanel: true,
       isEmailVerified: true,

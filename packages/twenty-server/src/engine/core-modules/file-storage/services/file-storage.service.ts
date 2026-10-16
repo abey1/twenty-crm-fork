@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import { isString } from '@sniptt/guards';
-import { basename, dirname, join } from 'path';
+import { basename, dirname, posix } from 'path';
 import { type Readable } from 'stream';
 import { v4 } from 'uuid';
 
@@ -354,13 +354,14 @@ export class FileStorageService {
     fileFolder: FileFolder;
     relativePath: string;
   }): { onStoragePath: string; resourcePath: string } {
-    const resourcePath = join(fileFolder, relativePath).replace(/\/+/g, '/');
+    // Storage keys must stay slash-separated. path.join on Windows inserts backslashes, which later path checks reject.
+    const resourcePath = posix
+      .join(fileFolder, relativePath)
+      .replace(/\/+/g, '/');
 
-    const onStoragePath = join(
-      workspaceId,
-      applicationUniversalIdentifier,
-      resourcePath,
-    ).replace(/\/+/g, '/');
+    const onStoragePath = posix
+      .join(workspaceId, applicationUniversalIdentifier, resourcePath)
+      .replace(/\/+/g, '/');
 
     validateStoragePathIsWithinWorkspaceOrThrow({
       onStoragePath,

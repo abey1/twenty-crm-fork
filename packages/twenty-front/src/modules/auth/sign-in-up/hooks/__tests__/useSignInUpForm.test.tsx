@@ -59,7 +59,24 @@ describe('useSignInUpForm', () => {
     });
   });
 
-  it('should prefill developer defaults when the state is true', () => {
+  it('should prefill developer defaults when the state is true and no invite email', () => {
+    const { result } = renderHook(() => useSignInUpForm(), {
+      wrapper: ({ children }) => (
+        <TestWrapper isDeveloperDefaultSignInPrefilled={true}>
+          {children}
+        </TestWrapper>
+      ),
+    });
+
+    expect(result.current.form.getValues()).toEqual({
+      exist: false,
+      email: 'thrive_admin@strive2thrive.earth',
+      password: 'thrive_admin@strive2thrive.earth',
+      captchaToken: '',
+    });
+  });
+
+  it('should keep invite email and leave password empty even when developer prefill is on', () => {
     const { result } = renderHook(() => useSignInUpForm(), {
       wrapper: ({ children }) => (
         <TestWrapper
@@ -74,7 +91,7 @@ describe('useSignInUpForm', () => {
     expect(result.current.form.getValues()).toEqual({
       exist: false,
       email: 'test@test.com',
-      password: 'tim@apple.dev',
+      password: '',
       captchaToken: '',
     });
   });

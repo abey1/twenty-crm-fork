@@ -102,7 +102,19 @@ export default defineConfig(({ command }) => {
       // sass-embedded). CI/build relies on the ambient src/scss-modules.d.ts.
       sassDts({ esmExport: true, legacyFileFormat: true }),
       dts(dtsConfig),
-      ...(isVitest ? [] : [checker(checkersConfig)]),
+      ...(isVitest
+        ? []
+        : [
+            checker({
+              ...checkersConfig,
+              // The build checker shells out to `tsc -p <absolute path>` without
+              // quotes. A workspace path with spaces is then parsed as extra
+              // source files (TS5042). Serve mode uses the TypeScript API.
+              enableBuild: !(
+                process.platform === 'win32' && __dirname.includes(' ')
+              ),
+            }),
+          ]),
       {
         name: 'copy-theme-css',
         apply: 'build',

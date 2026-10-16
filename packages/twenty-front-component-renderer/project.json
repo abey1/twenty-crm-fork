@@ -40,11 +40,11 @@
       ],
       "options": {
         "cwd": "packages/twenty-front-component-renderer",
-        "command": "tsx -r tsconfig-paths/register scripts/remote-dom/generate-remote-dom-elements.ts"
+        "command": "node --import tsx scripts/remote-dom/generate-remote-dom-elements.ts < NUL"
       },
       "configurations": {
         "verbose": {
-          "command": "tsx -r tsconfig-paths/register scripts/remote-dom/generate-remote-dom-elements.ts --verbose"
+          "command": "node --import tsx scripts/remote-dom/generate-remote-dom-elements.ts --verbose < NUL"
         }
       }
     },
@@ -80,7 +80,7 @@
       ],
       "options": {
         "cwd": "packages/twenty-front-component-renderer",
-        "command": "tsx -r tsconfig-paths/register scripts/front-component-sandbox/build-sandbox-document.ts"
+        "command": "node --import tsx scripts/front-component-sandbox/build-sandbox-document.ts < NUL"
       }
     },
     "storybook:prebuild": {

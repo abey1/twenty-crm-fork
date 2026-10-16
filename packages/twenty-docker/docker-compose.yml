@@ -2,7 +2,7 @@ name: twenty
 
 services:
   server:
-    image: twentycrm/twenty:${TAG:-latest}
+    image: bruckabey/twenty:v1
     volumes:
       - server-local-data:/app/packages/twenty-server/.local-storage
     ports:
@@ -48,10 +48,8 @@ services:
       # EMAIL_SMTP_PASSWORD: ${EMAIL_SMTP_PASSWORD:-}
 
     depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - db
+      - redis
     healthcheck:
       test: curl --fail http://localhost:3000/healthz
       interval: 5s
@@ -60,7 +58,7 @@ services:
     restart: always
 
   worker:
-    image: twentycrm/twenty:${TAG:-latest}
+    image: bruckabey/twenty:v1
     volumes:
       - server-local-data:/app/packages/twenty-server/.local-storage
     command: ["yarn", "worker:prod"]
@@ -104,10 +102,8 @@ services:
       # EMAIL_SMTP_PASSWORD: ${EMAIL_SMTP_PASSWORD:-}
 
     depends_on:
-      db:
-        condition: service_healthy
-      server:
-        condition: service_healthy
+      - db
+      - server
     restart: always
 
   db:

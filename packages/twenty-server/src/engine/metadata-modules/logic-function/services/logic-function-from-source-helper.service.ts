@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
-import { join } from 'path';
+import { posix } from 'path';
 
 import { isDefined } from 'twenty-shared/utils';
 import { Repository } from 'typeorm';
@@ -186,12 +186,13 @@ export class LogicFunctionFromSourceHelperService {
     const logicFunctionSubfolder =
       getLogicFunctionSubfolderForFromSource(logicFunctionId);
 
+    // Storage keys must stay slash-separated. path.join on Windows inserts backslashes, which file-path validation rejects.
     return {
-      sourceHandlerPath: join(
+      sourceHandlerPath: posix.join(
         logicFunctionSubfolder,
         DEFAULT_SOURCE_HANDLER_PATH,
       ),
-      builtHandlerPath: join(
+      builtHandlerPath: posix.join(
         logicFunctionSubfolder,
         DEFAULT_BUILT_HANDLER_PATH,
       ),

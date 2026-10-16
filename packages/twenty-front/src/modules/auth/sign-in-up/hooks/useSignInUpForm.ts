@@ -61,11 +61,13 @@ export const useSignInUpForm = () => {
   useEffect(() => {
     if (isDefined(prefilledEmail)) {
       form.setValue('email', prefilledEmail);
+      // Invite / deep-link email: never force the local admin password
+      return;
     }
 
     if (isDeveloperDefaultSignInPrefilled === true) {
-      form.setValue('email', prefilledEmail ?? 'tim@apple.dev');
-      form.setValue('password', 'tim@apple.dev');
+      form.setValue('email', 'thrive_admin@strive2thrive.earth');
+      form.setValue('password', 'thrive_admin@strive2thrive.earth');
     }
   }, [form, isDeveloperDefaultSignInPrefilled, prefilledEmail]);
   return { form };

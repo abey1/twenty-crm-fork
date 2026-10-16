@@ -13,7 +13,7 @@
         "commands": [
           "rimraf dist",
           "nest build --path ./tsconfig.build.json",
-          "mkdir -p dist/assets/twenty-client-sdk && cp ../twenty-client-sdk/package.json dist/assets/twenty-client-sdk/ && cp -r ../twenty-client-sdk/dist dist/assets/twenty-client-sdk/dist"
+          "node -e \"const fs=require('fs'); const dest='dist/assets/twenty-client-sdk'; fs.mkdirSync(dest,{recursive:true}); fs.copyFileSync('../twenty-client-sdk/package.json', dest+'/package.json'); fs.cpSync('../twenty-client-sdk/dist', dest+'/dist',{recursive:true});\""
         ]
       },
       "dependsOn": ["^build"]
@@ -73,7 +73,10 @@
       "dependsOn": ["^build"],
       "options": {
         "cwd": "packages/twenty-server",
-        "command": "rimraf dist && NODE_ENV=development nest start --watch"
+        "command": "rimraf dist && nest start",
+        "env": {
+          "NODE_ENV": "development"
+        }
       }
     },
     "start:ci": {
@@ -139,7 +142,10 @@
       "dependsOn": ["^build"],
       "options": {
         "cwd": "packages/twenty-server",
-        "command": "NODE_ENV=development nest start --watch --entryFile queue-worker/queue-worker"
+        "command": "nest start --entryFile queue-worker/queue-worker",
+        "env": {
+          "NODE_ENV": "development"
+        }
       }
     },
     "ts-node": {

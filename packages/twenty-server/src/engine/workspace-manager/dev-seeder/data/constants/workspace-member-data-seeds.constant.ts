@@ -26,8 +26,13 @@ export const WORKSPACE_MEMBER_DATA_SEED_COLUMNS: (keyof WorkspaceMemberDataSeed)
     'userId',
   ];
 
+const THRIVE_ADMIN_WORKSPACE_MEMBER_ID =
+  '20202020-0687-4c41-b707-ed1bfca972a7';
+
 export const WORKSPACE_MEMBER_DATA_SEED_IDS = {
-  TIM: '20202020-0687-4c41-b707-ed1bfca972a7',
+  // TIM kept as an alias so existing seed references keep working
+  TIM: THRIVE_ADMIN_WORKSPACE_MEMBER_ID,
+  THRIVE_ADMIN: THRIVE_ADMIN_WORKSPACE_MEMBER_ID,
   JONY: '20202020-77d5-4cb6-b60a-f4a835a85d61',
   PHIL: '20202020-1553-45c6-a028-5a9064cce07f',
   JANE: '20202020-463f-435b-828c-107e007a2711',
@@ -43,13 +48,13 @@ export const RANDOM_WORKSPACE_MEMBER_IDS = randomWorkspaceMemberIds;
 
 const originalWorkspaceMembers: WorkspaceMemberDataSeed[] = [
   {
-    id: WORKSPACE_MEMBER_DATA_SEED_IDS.TIM,
-    nameFirstName: 'Tim',
-    nameLastName: 'Apple',
+    id: WORKSPACE_MEMBER_DATA_SEED_IDS.THRIVE_ADMIN,
+    nameFirstName: 'thrive_admin',
+    nameLastName: 'strive2thrive.earth',
     locale: 'en',
     colorScheme: 'System',
-    userEmail: 'tim@apple.dev',
-    userId: USER_DATA_SEED_IDS.TIM,
+    userEmail: 'thrive_admin@strive2thrive.earth',
+    userId: USER_DATA_SEED_IDS.THRIVE_ADMIN,
   },
   {
     id: WORKSPACE_MEMBER_DATA_SEED_IDS.JONY,

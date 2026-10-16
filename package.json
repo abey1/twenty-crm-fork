@@ -67,7 +67,11 @@
     "docs:generate-paths": "tsx packages/twenty-docs/scripts/generate-documentation-paths.ts",
     "docs:prune-orphans": "tsx packages/twenty-docs/scripts/prune-orphan-translations.ts",
     "docs:fix-links": "tsx packages/twenty-docs/scripts/fix-translated-links.ts",
-    "start": "npx concurrently --kill-others 'npx nx run-many -t start -p twenty-server twenty-front' 'npx wait-on tcp:3000 && npx nx run twenty-server:worker'"
+    "start": "npx concurrently --kill-others 'npx nx run-many -t start -p twenty-server twenty-front' 'npx wait-on tcp:3000 && npx nx run twenty-server:worker'",
+    "start:server": "npx nx run twenty-server:start",
+    "start:front": "cd packages/twenty-front && npx vite --port 3001 --host 127.0.0.1",
+    "start:worker": "npx nx run twenty-server:worker",
+    "start:server-reset": "npx nx database:reset twenty-server"
   },
   "workspaces": {
     "packages": [
